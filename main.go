@@ -1,42 +1,28 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"net/http"
 	"os"
-	"runtime"
 
-	"github.com/gin-gonic/gin"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/Kahono0/simple-go-api/graph"
 )
 
+const defaultPort = "8080"
+
 func main() {
-	ConfigRuntime()
-	StartGin()
-}
-
-// ConfigRuntime sets the number of operating system threads.
-func ConfigRuntime() {
-	nuCPU := runtime.NumCPU()
-	runtime.GOMAXPROCS(nuCPU)
-	fmt.Printf("Running with %d CPUs\n", nuCPU)
-}
-
-// StartGin starts gin web server with setting router.
-func StartGin() {
-	gin.SetMode(gin.ReleaseMode)
-
-	router := gin.New()
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "",
-		})
-	})
-
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = defaultPort
 	}
-	if err := router.Run(":" + port); err != nil {
-		log.Panicf("error: %s", err)
-	}
+
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+
+	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/query", srv)
+
+	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
