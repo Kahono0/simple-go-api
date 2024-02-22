@@ -8,6 +8,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/Kahono0/simple-go-api/graph"
+	"github.com/Kahono0/simple-go-api/internal"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/joho/godotenv"
 	"golang.org/x/net/context"
@@ -51,13 +52,13 @@ func main() {
 	}))
 
 	//setup authentication
-	SetUpAuth(&config, provider)
+	internal.SetUpAuth(&config, provider)
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 
-	http.Handle("/graph", authMiddleWare(playground.Handler("GraphQL playground", "/query")))
-	http.Handle("/query", authMiddleWare(srv))
+	http.Handle("/graph", internal.AuthMiddleWare(playground.Handler("GraphQL playground", "/query")))
+	http.Handle("/query", internal.AuthMiddleWare(srv))
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Printf("connect to http://127.0.0.1:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

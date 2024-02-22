@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"crypto/rand"
@@ -23,6 +23,7 @@ func generateState() (string, error) {
 
 // setup authentication
 func SetUpAuth(config *oauth2.Config, provider *oidc.Provider) {
+
 	http.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
 		state, err := generateState()
 		if err != nil {
@@ -35,6 +36,7 @@ func SetUpAuth(config *oauth2.Config, provider *oidc.Provider) {
 		})
 		http.Redirect(w, r, config.AuthCodeURL(state), http.StatusSeeOther)
 	})
+
 	http.HandleFunc("/auth/google/callback", func(w http.ResponseWriter, r *http.Request) {
 		oauthstate, _ := r.Cookie("oauthstate")
 		if r.FormValue("state") != oauthstate.Value {
@@ -46,46 +48,42 @@ func SetUpAuth(config *oauth2.Config, provider *oidc.Provider) {
 			http.Error(w, "failed to exchange token", http.StatusInternalServerError)
 			return
 		}
-		//get the id token
+
+		userInfo, err := provider.UserInfo(r.Context(), oauth2.StaticTokenSource(token))
+		if err != nil {
+			http.Error(w, "failed to get user info", http.StatusInternalServerError)
+			return
+		}
+
 		rawIDToken, ok := token.Extra("id_token").(string)
 		if !ok {
 			http.Error(w, "no id_token", http.StatusInternalServerError)
 			return
 		}
-		verifier := provider.Verifier(&oidc.Config{ClientID: os.Getenv("GOOGLE_OAUTH2_CLIENT_ID")})
-		//verify the id token
-		idToken, err := verifier.Verify(r.Context(), rawIDToken)
-		if err != nil {
-			http.Error(w, "failed to verify ID Token", http.StatusInternalServerError)
-			return
+
+		//set the token in the cookie
+		c := &http.Cookie{
+			Name:    "token",
+			Value:   rawIDToken,
+			MaxAge:  24 * 60 * 60,
+			Path:    "/",
+			Expires: token.Expiry,
 		}
 
-		//get userInfo
-		userInfo := map[string]string{}
-		if err := idToken.Claims(&userInfo); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		http.SetCookie(w, c)
 
-		fmt.Println(userInfo)
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "Hello, %v!", userInfo.Subject)
 
-		//set the token in a cookie
-		http.SetCookie(w, &http.Cookie{
-			Name:  "token",
-			Value: token.AccessToken,
-		})
-
-		//redirect to the graph page
-		w.WriteHeader(http.StatusPermanentRedirect)
-		http.Redirect(w, r, "/graph", http.StatusSeeOther)
 	})
 }
 
 // middleware to check if the user is authenticated
-func authMiddleWare(next http.Handler) http.Handler {
+func AuthMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//check if the cookie is set
 		cookie, err := r.Cookie("token")
+
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			fmt.Fprint(w, "Unauthorized")
@@ -104,7 +102,7 @@ func authMiddleWare(next http.Handler) http.Handler {
 		_, err = verifier.Verify(r.Context(), cookie.Value)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Unauthorized")
+			fmt.Fprint(w, "Unauthorized!")
 			return
 		}
 
