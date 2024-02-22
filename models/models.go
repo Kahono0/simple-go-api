@@ -17,16 +17,17 @@ type Item struct {
 }
 
 type User struct {
-	Base
+	ID    string `gorm:"primary_key"`
 	Email string `json:"email"`
+	Name  string `json:"name"`
 }
 
 type Order struct {
 	Base
-	UserID *uuid.UUID `json:"user"`
-	Items  []*Item    `gorm:"many2many:order_items;" json:"items"`
-	Total  float64    `json:"total"`
-	Status string     `json:"status"`
+	UserID string  `json:"user_id"`
+	Items  []*Item `gorm:"many2many:order_items;" json:"items"`
+	Total  float64 `json:"total"`
+	Status string  `json:"status"`
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) (err error) {

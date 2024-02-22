@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/Kahono0/simple-go-api/graph"
 	"github.com/Kahono0/simple-go-api/internal"
+	"github.com/Kahono0/simple-go-api/utils"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/joho/godotenv"
 	"golang.org/x/net/context"
@@ -27,7 +28,7 @@ func main() {
 	}
 
 	//setup database
-	internal.ConnectDB()
+	utils.ConnectDB()
 
 	ctx := context.Background()
 

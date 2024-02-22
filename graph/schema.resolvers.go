@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/Kahono0/simple-go-api/graph/model"
+	"github.com/Kahono0/simple-go-api/models"
 )
 
 // CreateItem is the resolver for the createItem field.
@@ -63,7 +64,12 @@ func (r *queryResolver) Order(ctx context.Context, id string) (*model.Order, err
 
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Me - me"))
+	//get user from context
+	user := ctx.Value("user").(*models.User)
+	return &model.User{
+		ID:    user.ID,
+		Email: user.Email,
+	}, nil
 }
 
 // Mutation returns MutationResolver implementation.

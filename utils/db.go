@@ -1,4 +1,4 @@
-package internal
+package utils
 
 import (
 	"os"
@@ -23,4 +23,5 @@ func ConnectDB() {
 		&models.Order{},
 	)
 
+	DB = db
 }
