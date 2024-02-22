@@ -31,11 +31,13 @@ func authMiddleWare(next http.Handler) http.Handler {
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			fmt.Fprint(w, "Unauthorized")
+			return
 		}
 		//check if the cookie value is correct
 		if cookie.Value != "token" {
 			w.WriteHeader(http.StatusUnauthorized)
 			fmt.Fprint(w, "Unauthorized")
+			return
 		}
 		//if the cookie is set and the value is correct, call the next handler
 		next.ServeHTTP(w, r)
