@@ -141,8 +141,19 @@ func TestMutationResolver_AllActions(t *testing.T) {
 	}
 
 	// Test UpdateOrder
+	updatedOrder, err := resolver.UpdateOrder(ctx, createdOrder.ID, models.OrderStatusCompleted)
+	if err != nil {
+		t.Fatalf("UpdateOrder failed: %v", err)
+	}
 
+	if updatedOrder.Status != models.OrderStatusCompleted {
+		t.Fatalf("UpdateOrder failed: %v", updatedOrder)
+	}
 
+	// Teardown
+	// Delete the created order and item
+	_ = engine.DeleteOrder(createdOrder.ID)
 
-
+	// Delete the created item
+	_ = engine.DeleteItem(createdItem.ID)
 }
