@@ -21,6 +21,11 @@ type Order struct {
 	CreatedAt string  `json:"createdAt"`
 }
 
+type OrderInput struct {
+	Contact string   `json:"contact"`
+	Items   []string `json:"items"`
+}
+
 type Query struct {
 }
 

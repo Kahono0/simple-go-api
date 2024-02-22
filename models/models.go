@@ -1,33 +1,41 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
+const (
+	OrderStatusPending   = "pending"
+	OrderStatusCompleted = "completed"
+)
+
 type Base struct {
-	ID uuid.UUID `gorm:"type:uuid;primary_key"`
+	ID        uuid.UUID `gorm:"type:uuid;primary_key"`
+	CreatedAt time.Time
 }
 
 type Item struct {
 	Base
-	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
-	Price       float64 `json:"price"`
+	Name        string
+	Description *string
+	Price       float64
 }
 
 type User struct {
 	ID    string `gorm:"primary_key"`
-	Email string `json:"email"`
-	Name  string `json:"name"`
+	Email string
+	Name  string
 }
 
 type Order struct {
 	Base
-	UserID string  `json:"user_id"`
-	Items  []*Item `gorm:"many2many:order_items;" json:"items"`
-	Total  float64 `json:"total"`
-	Status string  `json:"status"`
+	UserID string
+	Items  []*Item `gorm:"many2many:order_items;"`
+	Total  float64
+	Status string
 }
 
 func (b *Base) BeforeCreate(tx *gorm.DB) (err error) {

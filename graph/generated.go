@@ -56,7 +56,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateItem  func(childComplexity int, name string, description *string, price float64) int
-		CreateOrder func(childComplexity int, itemIds []string) int
+		CreateOrder func(childComplexity int, input model.OrderInput) int
 		DeleteItem  func(childComplexity int, id string) int
 		DeleteOrder func(childComplexity int, id string) int
 		UpdateItem  func(childComplexity int, id string, name *string, description *string, price *float64) int
@@ -90,7 +90,7 @@ type MutationResolver interface {
 	CreateItem(ctx context.Context, name string, description *string, price float64) (*model.Item, error)
 	UpdateItem(ctx context.Context, id string, name *string, description *string, price *float64) (*model.Item, error)
 	DeleteItem(ctx context.Context, id string) (*model.Item, error)
-	CreateOrder(ctx context.Context, itemIds []string) (*model.Order, error)
+	CreateOrder(ctx context.Context, input model.OrderInput) (*model.Order, error)
 	UpdateOrder(ctx context.Context, id string, status string) (*model.Order, error)
 	DeleteOrder(ctx context.Context, id string) (*model.Order, error)
 }
@@ -171,7 +171,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateOrder(childComplexity, args["itemIds"].([]string)), true
+		return e.complexity.Mutation.CreateOrder(childComplexity, args["input"].(model.OrderInput)), true
 
 	case "Mutation.deleteItem":
 		if e.complexity.Mutation.DeleteItem == nil {
@@ -329,7 +329,9 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap()
+	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputOrderInput,
+	)
 	first := true
 
 	switch rc.Operation.Operation {
@@ -481,15 +483,15 @@ func (ec *executionContext) field_Mutation_createItem_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_createOrder_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 []string
-	if tmp, ok := rawArgs["itemIds"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("itemIds"))
-		arg0, err = ec.unmarshalNID2ᚕstringᚄ(ctx, tmp)
+	var arg0 model.OrderInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNOrderInput2githubᚗcomᚋKahono0ᚋsimpleᚑgoᚑapiᚋgraphᚋmodelᚐOrderInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["itemIds"] = arg0
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1048,21 +1050,18 @@ func (ec *executionContext) _Mutation_createOrder(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateOrder(rctx, fc.Args["itemIds"].([]string))
+		return ec.resolvers.Mutation().CreateOrder(rctx, fc.Args["input"].(model.OrderInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Order)
 	fc.Result = res
-	return ec.marshalNOrder2ᚖgithubᚗcomᚋKahono0ᚋsimpleᚑgoᚑapiᚋgraphᚋmodelᚐOrder(ctx, field.Selections, res)
+	return ec.marshalOOrder2ᚖgithubᚗcomᚋKahono0ᚋsimpleᚑgoᚑapiᚋgraphᚋmodelᚐOrder(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createOrder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3792,6 +3791,40 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputOrderInput(ctx context.Context, obj interface{}) (model.OrderInput, error) {
+	var it model.OrderInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"contact", "items"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "contact":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contact"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Contact = data
+		case "items":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("items"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Items = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3889,9 +3922,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createOrder(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "updateOrder":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateOrder(ctx, field)
@@ -4643,10 +4673,6 @@ func (ec *executionContext) marshalNItem2ᚖgithubᚗcomᚋKahono0ᚋsimpleᚑgo
 	return ec._Item(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOrder2githubᚗcomᚋKahono0ᚋsimpleᚑgoᚑapiᚋgraphᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v model.Order) graphql.Marshaler {
-	return ec._Order(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNOrder2ᚕᚖgithubᚗcomᚋKahono0ᚋsimpleᚑgoᚑapiᚋgraphᚋmodelᚐOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Order) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -4699,6 +4725,11 @@ func (ec *executionContext) marshalNOrder2ᚖgithubᚗcomᚋKahono0ᚋsimpleᚑg
 		return graphql.Null
 	}
 	return ec._Order(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNOrderInput2githubᚗcomᚋKahono0ᚋsimpleᚑgoᚑapiᚋgraphᚋmodelᚐOrderInput(ctx context.Context, v interface{}) (model.OrderInput, error) {
+	res, err := ec.unmarshalInputOrderInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

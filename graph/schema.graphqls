@@ -27,11 +27,16 @@ type Query {
   me: User
 }
 
+input OrderInput {
+  contact: String!
+  items: [ID!]!
+}
+
 type Mutation {
   createItem(name: String!, description: String, price: Float!): Item!
   updateItem(id: ID!, name: String, description: String, price: Float): Item
   deleteItem(id: ID!): Item
-  createOrder(itemIds: [ID!]!): Order!
+  createOrder(input: OrderInput!): Order
   updateOrder(id: ID!, status: String!): Order
   deleteOrder(id: ID!): Order
 }
