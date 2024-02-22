@@ -26,6 +26,9 @@ func main() {
 		port = defaultPort
 	}
 
+	//setup database
+	internal.ConnectDB()
+
 	ctx := context.Background()
 
 	//openid connect config
