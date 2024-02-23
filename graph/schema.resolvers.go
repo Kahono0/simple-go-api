@@ -67,7 +67,6 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input model.OrderInp
 
 	return &model.Order{
 		ID:        order.ID.String(),
-		User:      &model.User{ID: order.UserID},
 		Items:     items,
 		Total:     order.Total,
 		Status:    order.Status,
@@ -94,7 +93,6 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, id string, status st
 
 	return &model.Order{
 		ID:        order.ID.String(),
-		User:      &model.User{ID: order.UserID},
 		Items:     items,
 		Total:     order.Total,
 		Status:    order.Status,
@@ -165,7 +163,6 @@ func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
 
 		result[i] = &model.Order{
 			ID:        order.ID.String(),
-			User:      &model.User{ID: order.UserID, Email: user.Email, Name: user.Name},
 			Items:     items,
 			Total:     order.Total,
 			Status:    order.Status,
@@ -195,7 +192,6 @@ func (r *queryResolver) Order(ctx context.Context, id string) (*model.Order, err
 
 	return &model.Order{
 		ID:        order.ID.String(),
-		User:      &model.User{ID: order.UserID},
 		Items:     items,
 		Total:     order.Total,
 		Status:    order.Status,
@@ -210,6 +206,7 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	return &model.User{
 		ID:    user.ID,
 		Email: user.Email,
+		Name:  user.Name,
 	}, nil
 }
 

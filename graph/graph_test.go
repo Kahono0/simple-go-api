@@ -65,7 +65,6 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input model.OrderInp
 
 	return &model.Order{
 		ID:        order.ID.String(),
-		User:      &model.User{ID: order.UserID},
 		Items:     nil,
 		Total:     order.Total,
 		Status:    order.Status,
@@ -82,15 +81,12 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, id string, status st
 
 	return &model.Order{
 		ID:        order.ID.String(),
-		User:      &model.User{ID: order.UserID},
 		Items:     nil,
 		Total:     order.Total,
 		Status:    order.Status,
 		CreatedAt: order.CreatedAt.String(),
 	}, nil
 }
-
-
 
 func TestMutationResolver_AllActions(t *testing.T) {
 	// Setup
