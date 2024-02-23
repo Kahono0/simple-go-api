@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Kahono0/simple-go-api/engine"
 	"github.com/Kahono0/simple-go-api/graph/model"
@@ -56,10 +55,20 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input model.OrderInp
 		return nil, err
 	}
 
+	items := make([]*model.Item, len(order.Items))
+	for i, item := range order.Items {
+		items[i] = &model.Item{
+			ID:          item.ID.String(),
+			Name:        item.Name,
+			Description: item.Description,
+			Price:       item.Price,
+		}
+	}
+
 	return &model.Order{
 		ID:        order.ID.String(),
 		User:      &model.User{ID: order.UserID},
-		Items:     nil,
+		Items:     items,
 		Total:     order.Total,
 		Status:    order.Status,
 		CreatedAt: order.CreatedAt.String(),
@@ -73,10 +82,20 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, id string, status st
 		return nil, err
 	}
 
+	items := make([]*model.Item, len(order.Items))
+	for i, item := range order.Items {
+		items[i] = &model.Item{
+			ID:          item.ID.String(),
+			Name:        item.Name,
+			Description: item.Description,
+			Price:       item.Price,
+		}
+	}
+
 	return &model.Order{
 		ID:        order.ID.String(),
 		User:      &model.User{ID: order.UserID},
-		Items:     nil,
+		Items:     items,
 		Total:     order.Total,
 		Status:    order.Status,
 		CreatedAt: order.CreatedAt.String(),
@@ -85,27 +104,103 @@ func (r *mutationResolver) UpdateOrder(ctx context.Context, id string, status st
 
 // DeleteOrder is the resolver for the deleteOrder field.
 func (r *mutationResolver) DeleteOrder(ctx context.Context, id string) (*model.Order, error) {
-	panic(fmt.Errorf("not implemented: DeleteOrder - deleteOrder"))
+	return nil, engine.DeleteOrder(id)
 }
 
 // Items is the resolver for the items field.
 func (r *queryResolver) Items(ctx context.Context) ([]*model.Item, error) {
-	panic(fmt.Errorf("not implemented: Items - items"))
+	items, err := engine.GetItems()
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.Item, len(items))
+	for i, item := range items {
+		result[i] = &model.Item{
+			ID:          item.ID.String(),
+			Name:        item.Name,
+			Description: item.Description,
+			Price:       item.Price,
+		}
+	}
+
+	return result, nil
 }
 
 // Item is the resolver for the item field.
 func (r *queryResolver) Item(ctx context.Context, id string) (*model.Item, error) {
-	panic(fmt.Errorf("not implemented: Item - item"))
+	item, err := engine.GetItem(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.Item{
+		ID:          item.ID.String(),
+		Name:        item.Name,
+		Description: item.Description,
+		Price:       item.Price,
+	}, nil
 }
 
 // Orders is the resolver for the orders field.
 func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
-	panic(fmt.Errorf("not implemented: Orders - orders"))
+	user := ctx.Value("user").(*models.User)
+	orders, err := engine.GetOrdersByUserID(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.Order, len(orders))
+	for i, order := range orders {
+
+		items := make([]*model.Item, len(order.Items))
+		for i, item := range order.Items {
+			items[i] = &model.Item{
+				ID:          item.ID.String(),
+				Name:        item.Name,
+				Description: item.Description,
+				Price:       item.Price,
+			}
+		}
+
+		result[i] = &model.Order{
+			ID:        order.ID.String(),
+			User:      &model.User{ID: order.UserID, Email: user.Email, Name: user.Name},
+			Items:     items,
+			Total:     order.Total,
+			Status:    order.Status,
+			CreatedAt: order.CreatedAt.String(),
+		}
+	}
+
+	return result, nil
 }
 
 // Order is the resolver for the order field.
 func (r *queryResolver) Order(ctx context.Context, id string) (*model.Order, error) {
-	panic(fmt.Errorf("not implemented: Order - order"))
+	order, err := engine.GetOrder(id)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]*model.Item, len(order.Items))
+	for i, item := range order.Items {
+		items[i] = &model.Item{
+			ID:          item.ID.String(),
+			Name:        item.Name,
+			Description: item.Description,
+			Price:       item.Price,
+		}
+	}
+
+	return &model.Order{
+		ID:        order.ID.String(),
+		User:      &model.User{ID: order.UserID},
+		Items:     items,
+		Total:     order.Total,
+		Status:    order.Status,
+		CreatedAt: order.CreatedAt.String(),
+	}, nil
 }
 
 // Me is the resolver for the me field.

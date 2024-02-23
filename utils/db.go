@@ -3,7 +3,6 @@ package utils
 import (
 	"os"
 
-	"github.com/Kahono0/simple-go-api/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -17,11 +16,11 @@ func ConnectDB() {
 		panic(err)
 	}
 
-	db.AutoMigrate(
-		&models.User{},
-		&models.Item{},
-		&models.Order{},
-	)
+	// db.AutoMigrate(
+	// 	&models.User{},
+	// 	&models.Item{},
+	// 	&models.Order{},
+	// )
 
 	DB = db
 }

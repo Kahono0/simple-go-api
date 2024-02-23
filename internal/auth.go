@@ -74,7 +74,7 @@ func SetUpAuth(config *oauth2.Config, provider *oidc.Provider) {
 			Name:  "oauthstate",
 			Value: state,
 		})
-		http.Redirect(w, r, config.AuthCodeURL(state), http.StatusSeeOther)
+		http.Redirect(w, r, config.AuthCodeURL(state), http.StatusTemporaryRedirect)
 	})
 
 	http.HandleFunc("/auth/google/callback", func(w http.ResponseWriter, r *http.Request) {
@@ -89,12 +89,6 @@ func SetUpAuth(config *oauth2.Config, provider *oidc.Provider) {
 			return
 		}
 
-		userInfo, err := provider.UserInfo(r.Context(), oauth2.StaticTokenSource(token))
-		if err != nil {
-			http.Error(w, "failed to get user info", http.StatusInternalServerError)
-			return
-		}
-
 		rawIDToken, ok := token.Extra("id_token").(string)
 		if !ok {
 			http.Error(w, "no id_token", http.StatusInternalServerError)
@@ -106,8 +100,6 @@ func SetUpAuth(config *oauth2.Config, provider *oidc.Provider) {
 			http.Error(w, "failed to verify token", http.StatusInternalServerError)
 			return
 		}
-
-		fmt.Println(claims.FamilyName)
 
 		//create user if not exists
 		err = engine.CreateUser(claims.Sub, claims.Email, claims.Name)
@@ -127,8 +119,7 @@ func SetUpAuth(config *oauth2.Config, provider *oidc.Provider) {
 
 		http.SetCookie(w, c)
 
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "Hello, %v!", userInfo.Subject)
+		http.Redirect(w, r, "/graph", http.StatusTemporaryRedirect)
 
 	})
 }

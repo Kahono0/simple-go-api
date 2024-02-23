@@ -1,6 +1,6 @@
 module github.com/Kahono0/simple-go-api
 
-go 1.21.5
+go 1.21
 
 require (
 	github.com/99designs/gqlgen v0.17.44

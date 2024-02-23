@@ -42,6 +42,11 @@ func CreateOrder(userID string, items []string, contact string) (*models.Order, 
 		return nil, result.Error
 	}
 
+	err := utils.SendSMS(contact, "Your order has been placed")
+	if err != nil {
+		return nil, err
+	}
+
 	return &order, nil
 }
 
