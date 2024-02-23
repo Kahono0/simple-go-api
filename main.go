@@ -18,6 +18,33 @@ import (
 
 const defaultPort = "8080"
 
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+
+	loginHtml := `
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<title>Login</title>
+		</head>
+		<body>
+			<h1>Login</h1>
+			<form action="/auth" method="post">
+				<input type="submit" value="Login with Google">
+			</form>
+		</body>
+		</html>
+	`
+
+	//check if token is present
+	_, err := r.Cookie("token")
+	if err != nil {
+		w.Write([]byte(loginHtml))
+		return
+	}
+
+	http.Redirect(w, r, "/graph", http.StatusTemporaryRedirect)
+}
+
 func main() {
 
 	_ = godotenv.Load()
@@ -45,6 +72,9 @@ func main() {
 		RedirectURL:  os.Getenv("GOOGLE_OAUTH2_REDIRECT_URL"),
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
+
+	//setup routes
+	http.HandleFunc("/", indexHandler)
 
 	//health check
 	http.Handle("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
