@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"os"
 
@@ -124,6 +123,14 @@ func SetUpAuth(config *oauth2.Config, provider *oidc.Provider) {
 	})
 }
 
+func clearCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   "token",
+		Value:  "",
+		MaxAge: -1,
+	})
+}
+
 // middleware to check if the user is authenticated
 func AuthMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -131,15 +138,16 @@ func AuthMiddleWare(next http.Handler) http.Handler {
 		cookie, err := r.Cookie("token")
 
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Unauthorized")
+			//clear cookies
+			clearCookie(w)
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
 
 		provider, err := oidc.NewProvider(r.Context(), "https://accounts.google.com")
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "Internal Server Error")
+
+			http.Error(w, "failed to get provider", http.StatusInternalServerError)
 			return
 		}
 
@@ -147,29 +155,29 @@ func AuthMiddleWare(next http.Handler) http.Handler {
 		verifier := provider.Verifier(&oidc.Config{ClientID: os.Getenv("GOOGLE_OAUTH2_CLIENT_ID")})
 		v, err := verifier.Verify(r.Context(), cookie.Value)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Unauthorized!")
+			clearCookie(w)
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
 
 		claims := &Claims{}
 		err = v.Claims(claims)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Unauthorized!")
+			clearCookie(w)
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
 
 		user, err := engine.GetUserByID(claims.Sub)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "Internal Server Error")
+			clearCookie(w)
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
 
 		if user == nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Unauthorized!")
+			clearCookie(w)
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
 
